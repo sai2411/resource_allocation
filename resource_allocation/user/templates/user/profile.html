@@ -1,0 +1,239 @@
+{% extends 'user/base.html' %}
+  <style>
+    body{
+    background : -webkit-linear-gradient(to right,#09ad84,#6595bd);
+    background : linear-gradient(to right,#09ad84,#6595bd);
+}
+.container {
+    border:2px;
+    margin:2px;
+    display: flex;
+}
+  
+  .column {
+    flex: 1;
+    padding: 10px;
+    background-color: #f0f0f0;
+    
+    border: 1px solid aquamarine;
+  }
+  
+  h2 {
+    margin: 0;
+  }
+  
+  .resource-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .resource-item {
+    background-color: #ffffff;
+    padding: 5px;
+    margin-bottom: 5px;
+    cursor: move;
+  }
+  
+  .add-resource {
+    margin-top: 20px;
+  }
+  
+  .add-resource form {
+    
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .add-resource input[type="text"] {
+    margin-right: 10px;
+    padding: 5px;
+  }
+  
+  .add-resource button {
+    padding: 5px 10px;
+  }
+  </style>
+
+{% block content %}
+<style>
+  body{
+  background : -webkit-linear-gradient(to right,#09ad84,#6595bd);
+  background : linear-gradient(to right,#09ad84,#6595bd);
+}
+.container {
+  border:2px;
+  margin:2px;
+  display: flex;
+}
+
+.column {
+  flex: 1;
+  padding: 10px;
+  background-color: #f0f0f0;
+  
+  border: 1px solid aquamarine;
+}
+
+h2 {
+  margin: 0;
+}
+
+.resource-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.resource-item {
+  background-color: #ffffff;
+  padding: 5px;
+  margin-bottom: 5px;
+  cursor: move;
+}
+
+.add-resource {
+  margin-top: 20px;
+}
+
+.add-resource form {
+  
+  justify-content: center;
+  align-items: center;
+}
+
+.add-resource input[type="text"] {
+  margin-right: 10px;
+  padding: 5px;
+}
+
+.add-resource button {
+  padding: 5px 10px;
+}
+</style>
+<center><h1>Resource Allocation</h1></center>
+  <div class="container">
+    
+    <div class="column" id="available">
+        <h2 style="padding:1rem 1rem;border-bottom: 1px solid lightgreen;">Available</h2>
+        <ul id="available-list" class="resource-list">
+          
+        </ul>
+    </div>
+    <div class="column" id="assigned" ondrop="drop(event, 'assigned')" ondragover="allowDrop(event)">
+      <h2 style="padding:1rem 1rem;border-bottom: 1px solid lightgreen;">Assigned</h2>
+      <ul id="assigned-list" class="resource-list">
+        
+      </ul>
+    </div>
+    
+    <div class="column" id="billable">
+        <h2 style="padding:1rem 1rem;border-bottom: 1px solid lightgreen;">Billable</h2>
+        <ul id="billable-list" class="resource-list">
+          
+        </ul>
+    </div>
+  </div>
+
+  <div class="add-resource">
+    <h2>Add Resource</h2>
+    <br>
+    <form id="resource-form" action="{%url 'profile' %}" method="post">
+      {% csrf_token %}
+        <label>Resource Name : </label>
+        <input type="text" id="resource-name" name = "resource-name" required><br><br>
+        <label> Technology : </label>
+        <input type="text" id="resource-technology" name = "resource-technology" required>
+        <br>
+        <button type="submit">Add</button>
+    </form>
+  </div>
+
+  <script type="text/JavaScript">
+    function allowDrop(event) {
+    event.preventDefault();
+  }
+  
+  function drag(event) {
+    event.dataTransfer.setData("text", event.target.id);
+  }
+  
+  function drop(event, status) {
+  event.preventDefault();
+  var resourceId = event.dataTransfer.getData("text");
+  var resource = document.getElementById(resourceId);
+
+  var startDate = prompt("Enter the start date (YYYY-MM-DD format):");
+  if (startDateIsValid(startDate)) {
+    var endDate = prompt("Enter the end date (YYYY-MM-DD format):");
+    var description = prompt("Enter the project description:");
+    var targetList = document.getElementById(status + "-list");
+    var listItem = document.createElement("li");
+    listItem.id = resourceId;
+    listItem.className = "resource-item";
+    listItem.dataset.status = status;
+    var resourceNameSpan = document.createElement("span");
+    resourceNameSpan.textContent = resource.textContent;
+    var startDateSpan = document.createElement("span");
+    startDateSpan.textContent = "Start Date: " + startDate;
+    var endDateSpan = document.createElement("span");
+    endDateSpan.textContent = "End Date: " + endDate;
+    var descriptionSpan = document.createElement("span");
+    descriptionSpan.textContent = "Description: " + description;
+    listItem.appendChild(resourceNameSpan);
+    listItem.appendChild(startDateSpan);
+    listItem.appendChild(endDateSpan);
+    listItem.appendChild(descriptionSpan);
+    targetList.appendChild(listItem);
+    var available = document.getElementById("available-list");
+    available.removeChild(resource);
+    scheduleAutoMoveToBillable(listItem, startDate);
+  } else {
+    alert("Invalid start date. Please try again.");
+  }
+}
+  document.getElementById("resource-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    var resourceNameInput = document.getElementById("resource-name");
+    var resourceTechnologyInput = document.getElementById("resource-technology");
+    var resourceName = resourceNameInput.value.trim();
+    var resourceTechnology = resourceTechnologyInput.value.trim();
+    if (resourceName === "" || resourceTechnology === "") {
+      return;
+    }
+    var resourceId = "resource-" + Date.now();
+    var listItem = document.createElement("li");
+    listItem.id = resourceId;
+    listItem.className = "resource-item";
+    listItem.dataset.status = "available";
+    listItem.draggable = true;
+    listItem.ondragstart = drag;
+    var resourceNameSpan = document.createElement("span");
+    resourceNameSpan.textContent = resourceName;
+    var resourceTechnologySpan = document.createElement("span");
+    resourceTechnologySpan.textContent = " (" + resourceTechnology + ")";
+    listItem.appendChild(resourceNameSpan);
+    listItem.appendChild(resourceTechnologySpan);
+    var availableList = document.getElementById("available-list");
+    availableList.appendChild(listItem);
+    resourceNameInput.value = "";
+    resourceTechnologyInput.value = "";
+  });
+  function startDateIsValid(startDate) {
+      var today = new Date();
+      var nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      var selectedStartDate = new Date(startDate);
+      return selectedStartDate >= today && selectedStartDate <= nextWeek;
+    }
+
+    function scheduleAutoMoveToBillable(element, startDate) {
+      var today = new Date();
+      var selectedStartDate = new Date(startDate);
+      var timeUntilStart = selectedStartDate - today;
+      setTimeout(function() {
+        element.style.backgroundColor = "lightgreen";
+        element.draggable = true;
+        element.setAttribute("ondragstart", "drag(event)");
+        document.getElementById("billable").appendChild(element);
+      }, timeUntilStart);
+    }
+  </script>
+{% endblock %}

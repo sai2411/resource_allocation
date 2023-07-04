@@ -1,0 +1,24 @@
+{% extends 'user/base.html' %}
+
+{% block content %}
+<style>
+  
+  form{
+                  
+    width : 35rem;
+    margin : auto;
+    color : whitesmoke;
+    
+    background : -webkit-linear-gradient(to right,#152999,#65b3bd);
+    background : linear-gradient(to right,#152999,#65b3bd);
+    border-radius: 12px;
+    border : 1px solid rgba(255,255,255,0.125);
+    padding: 40px 10px 40px 40px;
+  }</style>
+  <h2>Register</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register</button>
+  </form>
+{% endblock %}
